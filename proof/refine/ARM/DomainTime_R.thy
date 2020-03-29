@@ -15,10 +15,6 @@ text \<open>Preservation of domain time remaining over kernel invocations;
 
 context begin interpretation Arch . (*FIXME: arch_split*)
 
-(* FIXME move to DetSchedDomainTime_AI *)
-crunch domain_list_inv[wp]: do_user_op "\<lambda>s. P (domain_list s)"
-  (wp: select_wp)
-
 (* abstract and haskell have identical domain list fields *)
 abbreviation
   valid_domain_list' :: "'a kernel_state_scheme \<Rightarrow> bool"
@@ -47,10 +43,6 @@ crunch ksDomSchedule_inv[wp]: doReplyTransfer "\<lambda>s. P (ksDomSchedule s)"
        setObject_ntfn_ct
    simp: unless_def crunch_simps
    ignore: transferCapsToSlots)
-
-crunch ksDomSchedule_inv[wp]: finaliseCap "\<lambda>s. P (ksDomSchedule s)"
-  (simp: crunch_simps assertE_def unless_def
-     wp: getObject_inv loadObject_default_inv crunch_wps)
 
 crunch ksDomSchedule_inv[wp]: cancelBadgedSends "\<lambda>s. P (ksDomSchedule s)"
   (simp: filterM_mapM crunch_simps
@@ -122,8 +114,12 @@ crunches sendFaultIPC, handleFault, replyFromKernel
 crunch ksDomainTime_inv[wp]: setDomain "\<lambda>s. P (ksDomainTime s)"
   (wp: crunch_wps simp: if_apply_def2)
 
+context
+notes option.case_cong_weak[cong]
+begin
 crunch ksDomainTime_inv[wp]: sendSignal "\<lambda>s. P (ksDomainTime s)"
   (wp: crunch_wps simp: crunch_simps simp: unless_def o_def)
+end
 
 crunch ksDomainTime_inv[wp]: deleteASID "\<lambda>s. P (ksDomainTime s)"
   (wp: crunch_wps setObject_ksPSpace_only getObject_inv loadObject_default_inv
@@ -155,14 +151,6 @@ crunch ksDomainTime_inv[wp]: doReplyTransfer "\<lambda>s. P (ksDomainTime s)"
    simp: crunch_simps
    ignore: transferCapsToSlots)
 
-crunch ksDomainTime_inv[wp]: finaliseCap "\<lambda>s. P (ksDomainTime s)"
-  (simp: crunch_simps assertE_def unless_def
-     wp: getObject_inv loadObject_default_inv crunch_wps)
-
-crunch ksDomainTime_inv[wp]: cancelBadgedSends "\<lambda>s. P (ksDomainTime s)"
-  (simp: filterM_mapM crunch_simps
-     wp: crunch_wps)
-
 crunch ksDomainTime_inv[wp]: createNewObjects "\<lambda>s. P (ksDomainTime s)"
   (simp: crunch_simps zipWithM_x_mapM
    wp: crunch_wps hoare_unless_wp)
@@ -192,7 +180,7 @@ lemma handleRecv_ksDomainTime_inv[wp]:
 
 crunches doUserOp, getIRQState, chooseThread, handleYield
   for ksDomainTime_inv[wp]: "(\<lambda>s. P (ksDomainTime s))"
-  (wp: select_wp)
+  (wp: select_wp crunch_wps)
 
 crunches handleSend, handleReply, handleCall, handleHypervisorFault
   for ksDomainTime_inv[wp]: "(\<lambda>s. P (ksDomainTime s))"
