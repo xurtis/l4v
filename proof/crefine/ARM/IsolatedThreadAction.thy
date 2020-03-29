@@ -732,6 +732,7 @@ lemma doIPCTransfer_simple_rewrite:
          y \<leftarrow> setMessageInfo rcvr ((messageInfoFromWord msgInfo) \<lparr>msgCapsUnwrapped := 0\<rparr>);
          asUser rcvr (setRegister ARM_H.badgeRegister badge)
       od)"
+  supply if_cong[cong]
   apply (rule monadic_rewrite_gen_asm)
   apply (simp add: doIPCTransfer_def bind_assoc doNormalTransfer_def
                    getMessageInfo_def
@@ -919,7 +920,11 @@ crunch obj_at_prio[wp]: cteDeleteOne "obj_at' (\<lambda>tcb. P (tcbPriority tcb)
        setThreadState_obj_at_unchanged setNotification_tcb setBoundNotification_obj_at_unchanged
         simp: crunch_simps unless_def)
 
+context
+notes if_cong[cong]
+begin
 crunch obj_at_dom[wp]: rescheduleRequired "obj_at' (\<lambda>tcb. P (tcbDomain tcb)) t"
+end
 
 context kernel_m begin
 
@@ -1133,6 +1138,7 @@ lemma assert_isolatable:
 
 lemma cteInsert_isolatable:
   "thread_actions_isolatable idx (cteInsert cap src dest)"
+  supply if_cong[cong]
   apply (simp add: cteInsert_def updateCap_def updateMDB_def
                    Let_def setUntypedCapAsFull_def)
   apply (intro thread_actions_isolatable_bind[OF _ _ hoare_pre(1)]
@@ -1424,6 +1430,7 @@ lemma updateMDB_isolatable:
 
 lemma clearUntypedFreeIndex_isolatable:
   "thread_actions_isolatable idx (clearUntypedFreeIndex slot)"
+  supply option.case_cong[cong]
   apply (simp add: clearUntypedFreeIndex_def getSlotCap_def)
   apply (rule thread_actions_isolatable_bind)
     apply (rule getCTE_isolatable)
@@ -1461,6 +1468,7 @@ lemmas fastpath_isolate_rewrites
 
 lemma lookupIPCBuffer_isolatable:
   "thread_actions_isolatable idx (lookupIPCBuffer w t)"
+  supply if_cong[cong]
   apply (simp add: lookupIPCBuffer_def)
   apply (rule thread_actions_isolatable_bind)
   apply (clarsimp simp: put_tcb_state_regs_tcb_def threadGet_isolatable

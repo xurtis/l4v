@@ -826,6 +826,7 @@ lemma update_freeIndex':
       using order_trans[OF i'_bound power_increasing[OF sz_bound], simplified]
       by (simp add: word_of_nat_le untypedBits_defs)
     show ?thesis
+      supply if_cong[cong]
       apply (cinit lift: cap_ptr_' v32_')
        apply (rule ccorres_pre_getCTE)
        apply (rule_tac P="\<lambda>s. ctes_of s srcSlot = Some rv \<and> (\<exists>i. cteCap rv = UntypedCap d p sz i)"
@@ -1895,7 +1896,7 @@ lemma heap_list_zero_Ball_intvl:
 lemma untypedZeroRange_not_device:
   "untypedZeroRange cap = Some r
     \<Longrightarrow> \<not> capIsDevice cap"
-  by (clarsimp simp: untypedZeroRange_def)
+  by (clarsimp simp: untypedZeroRange_def cong: if_cong)
 
 lemma updateTrackedFreeIndex_noop_ccorres:
   "ccorres dc xfdc (cte_wp_at' ((\<lambda>cap. isUntypedCap cap
@@ -2056,6 +2057,7 @@ lemma emptySlot_ccorres:
           []
           (emptySlot slot info)
           (Call emptySlot_'proc)"
+  supply if_cong[cong]
   apply (cinit lift: slot_' cleanupInfo_' simp: case_Null_If)
 
   \<comment> \<open>--- handle the clearUntypedFreeIndex\<close>
@@ -2293,6 +2295,7 @@ lemma Arch_sameRegionAs_spec:
                  ccap_relation (ArchObjectCap capb) \<acute>cap_b  \<rbrace>
   Call Arch_sameRegionAs_'proc
   \<lbrace>  \<acute>ret__unsigned_long = from_bool (Arch.sameRegionAs capa capb) \<rbrace>"
+  supply if_cong[cong]
   apply vcg
   apply clarsimp
 
@@ -2681,7 +2684,7 @@ lemma ccap_relation_get_capSizeBits_physical:
         defer 4 (* arch caps last *)
         apply ((frule cap_get_tag_isCap_unfolded_H_cap,
                      clarsimp simp: unfolds
-                             split: if_split_asm)+)[5] (* SOMEONE FIX SUBGOAL PLZ *)
+                             split: if_split_asm)+)[5]
    apply (frule cap_get_tag_isCap_unfolded_H_cap)
    apply (clarsimp simp: unfolds split: if_split_asm)
    apply (rule arg_cong [OF less_mask_eq[where n=5, unfolded mask_def, simplified]])
@@ -3223,6 +3226,7 @@ lemma isMDBParentOf_spec:
             (\<exists>s. s \<turnstile>' (cteCap ctea)) }
    Call isMDBParentOf_'proc
    \<lbrace> \<acute>ret__unsigned_long = from_bool (isMDBParentOf ctea cteb) \<rbrace>"
+  supply if_cong[cong]
   apply (intro allI, rule conseqPre)
    apply vcg
   apply (clarsimp simp: isMDBParentOf_def)
@@ -3311,6 +3315,7 @@ lemma updateCapData_spec:
   "\<forall>cap. \<Gamma> \<turnstile> \<lbrace> ccap_relation cap \<acute>cap \<and> preserve = to_bool (\<acute>preserve) \<and> newData = \<acute>newData\<rbrace>
   Call updateCapData_'proc
   \<lbrace>  ccap_relation (updateCapData preserve newData cap) \<acute>ret__struct_cap_C \<rbrace>"
+  supply if_cong[cong]
   apply (rule allI, rule conseqPre)
   apply vcg
   apply (clarsimp simp: if_1_0_0)
