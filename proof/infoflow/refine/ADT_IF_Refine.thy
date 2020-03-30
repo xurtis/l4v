@@ -1089,8 +1089,6 @@ lemmas preserves_lifts = preserves_lift_ret preserves_lift preserves_lift'
                          preserves_lift'' preserves_lift''' preserves'_lift
 
 
-
-
 defs step_restrict_def:
   "step_restrict \<equiv> \<lambda>s. s \<in> has_srel_state (lift_fst_rel (lift_snd_rel state_relation)) full_invs_if'"
 
