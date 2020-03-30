@@ -60,10 +60,6 @@ crunch ksDomSchedule_inv[wp]: doReplyTransfer "\<lambda>s. P (ksDomSchedule s)"
         simp: unless_def crunch_simps
    ignore: transferCapsToSlots)
 
-crunch ksDomSchedule_inv[wp]: finaliseCap "\<lambda>s. P (ksDomSchedule s)"
-  (simp: crunch_simps assertE_def unless_def
-     wp: getObject_inv loadObject_default_inv crunch_wps)
-
 crunch ksDomSchedule_inv[wp]: cancelBadgedSends "\<lambda>s. P (ksDomSchedule s)"
   (simp: filterM_mapM crunch_simps
      wp: crunch_wps hoare_unless_wp)
@@ -126,8 +122,12 @@ crunches sendFaultIPC, handleFault, replyFromKernel
 crunch ksDomainTime_inv[wp]: setDomain "\<lambda>s. P (ksDomainTime s)"
   (wp: crunch_wps simp: if_apply_def2)
 
+context
+notes option.case_cong_weak[cong]
+begin
 crunch ksDomainTime_inv[wp]: sendSignal "\<lambda>s. P (ksDomainTime s)"
   (wp: crunch_wps simp: crunch_simps simp: unless_def o_def)
+end
 
 crunches deleteASID, dissociateVCPUTCB
   for ksDomainTime_inv[wp]: "\<lambda>s. P (ksDomainTime s)"
@@ -159,14 +159,6 @@ crunch ksDomainTime_inv[wp]: doReplyTransfer "\<lambda>s. P (ksDomainTime s)"
        setObject_ntfn_ct
         simp: unless_def crunch_simps
    ignore: transferCapsToSlots)
-
-crunch ksDomainTime_inv[wp]: finaliseCap "\<lambda>s. P (ksDomainTime s)"
-  (simp: crunch_simps assertE_def unless_def
-     wp: getObject_inv loadObject_default_inv crunch_wps)
-
-crunch ksDomainTime_inv[wp]: cancelBadgedSends "\<lambda>s. P (ksDomainTime s)"
-  (simp: filterM_mapM crunch_simps
-     wp: crunch_wps)
 
 crunch ksDomainTime_inv[wp]: createNewObjects "\<lambda>s. P (ksDomainTime s)"
   (simp: crunch_simps zipWithM_x_mapM

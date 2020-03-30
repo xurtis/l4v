@@ -348,11 +348,10 @@ lemma tcbSchedEnqueue_almost_no_orphans:
   apply (rule_tac x=ko in exI)
   apply clarsimp
   apply (rule conjI)
-   apply fastforce
-  apply (unfold no_orphans_def almost_no_orphans_def)
-  apply clarsimp
-  apply (drule queued_in_queue)
-    apply (fastforce simp: all_queued_tcb_ptrs_def)+
+   apply (unfold no_orphans_def almost_no_orphans_def)
+   apply clarsimp
+   apply (drule queued_in_queue)
+     apply (fastforce simp: all_queued_tcb_ptrs_def)+
   done
 
 lemma tcbSchedEnqueue_almost_no_orphans_lift:
@@ -1094,6 +1093,7 @@ proof -
 
   show ?thesis
   unfolding schedule_def
+  supply if_weak_cong[cong]
   apply (wp, wpc)
        \<comment> \<open>action = ResumeCurrentThread\<close>
       apply (wp)[1]
