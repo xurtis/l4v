@@ -2660,6 +2660,46 @@ proof -
   done
 qed
 
+lemma replyUnlink_valid_tcb_state'_restart[wp]:
+  "\<lbrace>\<lambda>s. sch_act_wf (ksSchedulerAction s) s \<and> sch_act_simple s\<rbrace>
+   replyUnlink t
+   \<lbrace>\<lambda>_ s. sch_act_wf (ksSchedulerAction s) s\<rbrace>"
+  apply (clarsimp simp: replyUnlink_def setReplyTCB_def getReplyTCB_def liftM_def)
+  apply wpsimp
+  done
+
+lemma replyUnlink_valid_queues[wp]:
+  "\<lbrace>valid_queues and
+    (\<lambda>s. \<forall>a b t. obj_at' (\<lambda>reply. replyTCB reply = Some t) r s \<longrightarrow> t \<notin> set (ksReadyQueues s (a, b)))\<rbrace>
+   replyUnlink r
+   \<lbrace>\<lambda>_. valid_queues\<rbrace>"
+  apply (clarsimp simp: replyUnlink_def setReplyTCB_def getReplyTCB_def liftM_def)
+  apply (wpsimp wp: sts_valid_queues)
+  by (normalise_obj_at')
+
+lemma replyUnlink_weak_sch_act_wf[wp]:
+  "\<lbrace>\<lambda>s. weak_sch_act_wf (ksSchedulerAction s) s
+        \<and> (\<forall>t. obj_at' (\<lambda>reply. replyTCB reply = Some t) r s \<longrightarrow> ksSchedulerAction s \<noteq> SwitchToThread t)\<rbrace>
+   replyUnlink r
+   \<lbrace>\<lambda>_ s. weak_sch_act_wf (ksSchedulerAction s) s\<rbrace>"
+  unfolding replyUnlink_def setReplyTCB_def getReplyTCB_def
+  apply (wpsimp wp: hoare_vcg_if_lift2 hoare_vcg_imp_lift hoare_vcg_all_lift
+              simp: weak_sch_act_wf_def)
+  by (normalise_obj_at')
+
+lemma replyUnlink_list_refs_of_replies'[wp]:
+  "\<lbrace>\<lambda>s. P ((list_refs_of_replies' s))\<rbrace>
+   replyUnlink r
+   \<lbrace>\<lambda>_ s. P (list_refs_of_replies' s)\<rbrace>"
+  unfolding replyUnlink_def setReplyTCB_def getReplyTCB_def
+  apply (wpsimp simp: updateObject_default_def setObject_def split_def)
+  apply (erule arg_cong[where f=P, THEN iffD1, rotated])
+  apply (rule ext)
+  apply (clarsimp split: if_split)
+  apply (clarsimp simp: opt_map_def sym_refs_def fun_upd_def list_refs_of_reply'_def
+                        map_set_def projectKO_opt_reply obj_at'_real_def ko_wp_at'_def split: option.split)
+  done
+
 lemma cancel_all_invs'_helper:
   "\<lbrace>all_invs_but_ct_not_inQ'
     and (\<lambda>s. \<forall>x \<in> set q. tcb_at' x s)
@@ -2673,21 +2713,41 @@ lemma cancel_all_invs'_helper:
                   else setThreadState Structures_H.thread_state.Inactive t
                od) q
    \<lbrace>\<lambda>rv. all_invs_but_ct_not_inQ'\<rbrace>"
+  supply if_split[split del]
   apply (rule mapM_x_inv_wp2)
    apply clarsimp
   apply (rule hoare_pre)
-   apply (wp valid_irq_node_lift valid_irq_handlers_lift'' irqs_masked_lift
+(* clean this shit up *)
+   apply (wpsimp wp: valid_irq_node_lift valid_irq_handlers_lift'' irqs_masked_lift
+              hoare_vcg_const_Ball_lift untyped_ranges_zero_lift
+              sts_valid_queues sts_st_tcb' setThreadState_not_st simp: cteCaps_of_def)
+       apply (strengthen weak_sch_act_wf_D1)
+(* map_set (replies_of' s |> (Some \<circ> list_refs_of_reply')) *)
+(* map_set (replies_of' s |> (\<lambda>a. Some (list_refs_of_reply' a))) *)
+(* f |> (Some \<circ> g) *)
+apply_trace (wpsimp wp: valid_irq_node_lift valid_irq_handlers_lift'' irqs_masked_lift
              hoare_vcg_const_Ball_lift untyped_ranges_zero_lift
-             sts_valid_queues sts_st_tcb' setThreadState_not_st
-        | simp add: cteCaps_of_def o_def)+
-(*   apply (unfold fun_upd_apply Invariants_H.tcb_st_refs_of'_simps)
+             sts_valid_queues sts_st_tcb' setThreadState_not_st hoare_drop_imp replyUnlink_valid_objs'
+ split: if_splits
+simp: cteCaps_of_def valid_tcb_state'_def simp_del: comp_apply)+
+thm comp_def comp_apply
+find_theorems list_refs_of_replies' valid
+apply (wpsimp wp: replyUnlink_valid_objs')
+find_theorems sym_refs list_refs_of_reply'
+find_theorems name: reply name: unlink
+thm replyUnlink_assertion
+(* write replyUnlink lemmas *)
+find_theorems possibleSwitchTo valid_pspace'
+thm setThreadState_def
+thm hoare_strengthen_post[where R="Q"]
+   apply (unfold fun_upd_apply Invariants_H.tcb_st_refs_of'_simps)
   apply clarsimp
   apply (intro conjI)
   apply (clarsimp simp: valid_tcb_state'_def global'_no_ex_cap
                  elim!: rsubst[where P=sym_refs]
                  dest!: set_mono_suffix
                 intro!: ext
-       | (drule (1) bspec, clarsimp simp: valid_pspace'_def valid_tcb'_def elim!: valid_objs_valid_tcbE'))+ *)
+       | (drule (1) bspec, clarsimp simp: valid_pspace'_def valid_tcb'_def elim!: valid_objs_valid_tcbE'))+
   sorry
 
 lemma ep_q_refs_max:
