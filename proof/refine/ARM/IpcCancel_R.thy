@@ -2807,22 +2807,9 @@ lemma cancel_all_invs'_helper:
                   elim!: rsubst[where P=sym_refs]
                   dest!: set_mono_suffix
                  intro!: ext
+                   cong: conj_cong
         | (drule (1) bspec, clarsimp simp: valid_pspace'_def valid_tcb'_def elim!: valid_objs_valid_tcbE'))+
   sorry
-
-lemma ep_q_refs_max:
-  "\<lbrakk> ko_at' r p s; sym_refs (state_refs_of' s); r \<noteq> IdleEP \<rbrakk>
-      \<Longrightarrow> (state_refs_of' s p \<subseteq> (set (epQueue r) \<times> {EPSend, EPRecv}))
-       \<and> (\<forall>x\<in>set (epQueue r). \<exists>ntfnptr. state_refs_of' s x \<subseteq>
-                                  {(p, TCBBlockedSend), (p, TCBBlockedRecv), (ntfnptr, TCBBound)})"
-  apply (frule(1) sym_refs_ko_atD')
-  apply (drule ko_at_state_refs_ofD')
-  apply (case_tac r)
-  sorry (*
-    apply (clarsimp simp: st_tcb_at_refs_of_rev' tcb_bound_refs'_def
-             | rule conjI | drule(1) bspec | drule st_tcb_at_state_refs_ofD'
-             | case_tac ntfnptr)+
-  done *)
 
 lemma rescheduleRequired_invs'[wp]:
   "\<lbrace>invs'\<rbrace> rescheduleRequired \<lbrace>\<lambda>rv. invs'\<rbrace>"
