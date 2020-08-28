@@ -2725,7 +2725,6 @@ crunches replyUnlink
   and gsMaxObjectSize[wp]: "\<lambda>s. P (gsMaxObjectSize s)"
   (wp: crunch_wps)
 
-(* precondition is probably wrong *)
 lemma replyUnlink_valid_idle'[wp]:
   "\<lbrace>\<lambda>s. valid_idle' s \<and> valid_pspace' s \<and> (\<forall>v. ko_at' v r s \<longrightarrow> valid_reply' v s) \<and> t \<noteq> ksIdleThread s\<rbrace>
    replyUnlink r t
@@ -2746,24 +2745,17 @@ lemma replyUnlink_valid_pde_mappings'[wp]:
   apply (wpsimp wp: gts_wp')
   sorry
 
-crunches possibleSwitchTo
-  for sdk[wp]: "(\<lambda>s. ksCurDomain s \<le> maxDomain)"
-
-lemma replyUnlink_valid_pde_mappings'[wp]:
-  "\<lbrace>\<lambda>s. pspace_domain_valid s\<rbrace>
+lemma replyUnlink_ksQ[wp]:
+  "\<lbrace>\<lambda>s. sch_act_simple s \<and> P (ksReadyQueues s p) t\<rbrace>
    replyUnlink r t
-   \<lbrace>\<lambda>_ s. pspace_domain_valid s\<rbrace>"
+   \<lbrace>\<lambda>_ s. P (ksReadyQueues s p) t\<rbrace>"
   unfolding replyUnlink_def setReplyTCB_def getReplyTCB_def
-  by (wpsimp wp: gts_wp')
-  sorry
-find_theorems ksCurDomain maxDomain
-(*
-               ksCurDomain s \<le> maxDomain \<and>
-               ksDomSchedule s \<noteq> [] \<and>
-               (\<forall>x\<in>set (ksDomSchedule s). dschDomain x \<le> maxDomain \<and> 0 < dschLength x) \<and>
-               ksDomSchedule s = ksDomSchedule (newKernelState undefined) \<and>
-               ksDomScheduleIdx s < length (ksDomSchedule (newKernelState undefined)) \<and>
-               untyped_ranges_zero_inv (\<lambda>a. map_option cteCap (ctes_of s a)) (gsUntypedZeroRanges s) \<and> *)
+  by (wpsimp wp: gts_wp' sts_ksQ)
+
+lemma replyUnlink_utr[wp]:
+  "replyUnlink r t \<lbrace>untyped_ranges_zero'\<rbrace>"
+  by (wpsimp simp: cteCaps_of_def o_def wp: untyped_ranges_zero_lift)
+
 lemma weak_sch_act_wf_D1:
   "weak_sch_act_wf sa s \<Longrightarrow> (\<forall>t. sa = SwitchToThread t \<longrightarrow> st_tcb_at' runnable' t s)"
   by (simp add: weak_sch_act_wf_def)
@@ -2785,33 +2777,37 @@ lemma cancel_all_invs'_helper:
   apply (rule mapM_x_inv_wp2)
    apply clarsimp
   apply (rule hoare_pre)
-(* clean this shit up *)
+   (* clean up *)
    apply (wpsimp wp: valid_irq_node_lift valid_irq_handlers_lift'' irqs_masked_lift
-              hoare_vcg_const_Ball_lift untyped_ranges_zero_lift
-              sts_valid_queues sts_st_tcb' setThreadState_not_st simp: cteCaps_of_def)
-find_theorems ksSchedulerAction SwitchToThread st_tcb_at' runnable'
-thm weak_sch_act_wf_def
-find_theorems conj name: 1
+                     hoare_vcg_const_Ball_lift
+                     sts_valid_queues sts_st_tcb' setThreadState_not_st)
        apply (strengthen weak_sch_act_wf_D1)
-(* map_set (replies_of' s |> (Some \<circ> list_refs_of_reply')) *)
-(* map_set (replies_of' s |> (\<lambda>a. Some (list_refs_of_reply' a))) *)
-(* f |> (Some \<circ> g) *)
-apply_trace (wpsimp wp: valid_irq_node_lift valid_irq_handlers_lift'' irqs_masked_lift
-             hoare_vcg_const_Ball_lift untyped_ranges_zero_lift
-             sts_valid_queues sts_st_tcb' setThreadState_not_st hoare_drop_imp replyUnlink_valid_objs'
- split: if_splits
-simp: cteCaps_of_def valid_tcb_state'_def simp_del: comp_apply)+
-find_theorems replyUnlink valid_pspace'
-(* write replyUnlink lemmas *)
-thm hoare_strengthen_post[where R="Q"]
-   apply (unfold fun_upd_apply Invariants_H.tcb_st_refs_of'_simps)
-  apply clarsimp
+       apply (wpsimp wp: valid_irq_node_lift valid_irq_handlers_lift'' irqs_masked_lift
+                         hoare_vcg_const_Ball_lift
+                         sts_valid_queues sts_st_tcb' setThreadState_not_st hoare_drop_imp
+                         replyUnlink_valid_objs'
+                  split: if_splits
+                   simp: valid_tcb_state'_def simp_del: comp_apply)+
+    apply (wpsimp wp: hoare_vcg_all_lift hoare_vcg_const_Ball_lift)
+   apply (wpsimp wp: valid_irq_node_lift valid_irq_handlers_lift'' irqs_masked_lift
+                     hoare_vcg_const_Ball_lift
+                     sts_valid_queues sts_st_tcb' setThreadState_not_st hoare_drop_imp
+                     replyUnlink_valid_objs'
+              split: if_splits
+               simp: valid_tcb_state'_def simp_del: comp_apply)+
+   apply (wpsimp wp: hoare_vcg_all_lift)
+   apply (wpsimp wp: valid_irq_node_lift valid_irq_handlers_lift'' irqs_masked_lift
+                     hoare_vcg_const_Ball_lift
+                     sts_valid_queues sts_st_tcb' setThreadState_not_st hoare_drop_imp
+                     replyUnlink_valid_objs'
+              split: if_splits
+               simp: valid_tcb_state'_def simp_del: comp_apply)+
   apply (intro conjI)
-  apply (clarsimp simp: valid_tcb_state'_def global'_no_ex_cap
-                 elim!: rsubst[where P=sym_refs]
-                 dest!: set_mono_suffix
-                intro!: ext
-       | (drule (1) bspec, clarsimp simp: valid_pspace'_def valid_tcb'_def elim!: valid_objs_valid_tcbE'))+
+   apply (clarsimp simp: valid_tcb_state'_def global'_no_ex_cap
+                  elim!: rsubst[where P=sym_refs]
+                  dest!: set_mono_suffix
+                 intro!: ext
+        | (drule (1) bspec, clarsimp simp: valid_pspace'_def valid_tcb'_def elim!: valid_objs_valid_tcbE'))+
   sorry
 
 lemma ep_q_refs_max:
