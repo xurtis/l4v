@@ -2660,7 +2660,7 @@ proof -
   done
 qed
 
-lemma replyUnlink_valid_tcb_state'_restart[wp]:
+lemma replyUnlink_sch_act[wp]:
   "\<lbrace>\<lambda>s. sch_act_wf (ksSchedulerAction s) s \<and> sch_act_simple s\<rbrace>
    replyUnlink r t
    \<lbrace>\<lambda>_ s. sch_act_wf (ksSchedulerAction s) s\<rbrace>"
@@ -2687,11 +2687,16 @@ lemma replyUnlink_list_refs_of_replies'[wp]:
   done
 
 lemma replyUnlink_valid_pspace'[wp]:
-  "\<lbrace>\<lambda>s. valid_pspace' s \<and> (\<forall>v. ko_at' v r s \<longrightarrow> valid_reply' v s)\<rbrace>
+  "\<lbrace>\<lambda>s. valid_pspace' s\<rbrace>
    replyUnlink r t
    \<lbrace>\<lambda>_ s. valid_pspace' s\<rbrace>"
   unfolding replyUnlink_def setReplyTCB_def getReplyTCB_def
-  by (wpsimp wp: gts_wp' simp: valid_tcb_state'_def valid_reply'_def)
+  apply (wpsimp wp: gts_wp' simp: valid_tcb_state'_def)
+  apply (frule valid_pspace_valid_objs')
+  apply (frule(1) reply_ko_at_valid_objs_valid_reply')
+  apply (drule(1) ko_at'_inj)
+  apply (clarsimp simp: valid_reply'_def)
+  done
 
 lemma replyUnlink_if_live_then_nonz_cap'[wp]:
   "\<lbrace>\<lambda>s. if_live_then_nonz_cap' s \<and> ex_nonz_cap_to' r s\<rbrace>
@@ -2726,11 +2731,16 @@ crunches replyUnlink
   (wp: crunch_wps)
 
 lemma replyUnlink_valid_idle'[wp]:
-  "\<lbrace>\<lambda>s. valid_idle' s \<and> valid_pspace' s \<and> (\<forall>v. ko_at' v r s \<longrightarrow> valid_reply' v s) \<and> t \<noteq> ksIdleThread s\<rbrace>
+  "\<lbrace>\<lambda>s. valid_idle' s \<and> valid_pspace' s \<and> t \<noteq> ksIdleThread s\<rbrace>
    replyUnlink r t
    \<lbrace>\<lambda>_ s. valid_idle' s\<rbrace>"
   unfolding replyUnlink_def setReplyTCB_def getReplyTCB_def
-  by (wpsimp wp: gts_wp' simp: valid_reply'_def)
+  apply (wpsimp wp: gts_wp' simp: valid_reply'_def)
+  apply (frule valid_pspace_valid_objs')
+  apply (frule(1) reply_ko_at_valid_objs_valid_reply')
+  apply (drule(1) ko_at'_inj)
+  apply (clarsimp simp: valid_reply'_def)
+  done
 
 lemma replyUnlink_valid_irq_node'[wp]:
   "replyUnlink r t \<lbrace>\<lambda> s. valid_irq_node' (irq_node' s) s\<rbrace>"
@@ -2741,9 +2751,10 @@ lemma replyUnlink_valid_pde_mappings'[wp]:
   "\<lbrace>\<lambda>s. valid_pde_mappings' s\<rbrace>
    replyUnlink r t
    \<lbrace>\<lambda>_ s. valid_pde_mappings' s\<rbrace>"
-  unfolding replyUnlink_def setReplyTCB_def getReplyTCB_def
-  apply (wpsimp wp: gts_wp')
-  sorry
+  apply (clarsimp simp: replyUnlink_def setReplyTCB_def getReplyTCB_def)
+  apply (wpsimp wp: set_reply'.set_wp gts_wp')
+  apply (fastforce simp: valid_pde_mappings'_def obj_at'_def projectKOs ps_clear_upd')
+  done
 
 lemma replyUnlink_ksQ[wp]:
   "\<lbrace>\<lambda>s. sch_act_simple s \<and> P (ksReadyQueues s p) t\<rbrace>
@@ -3204,7 +3215,6 @@ lemma replyUnlink_unlive:
 
 crunches replyUnlink
   for sch_act_not[wp]: "\<lambda>s. sch_act_not t s"
-  and typ_at'[wp]: "\<lambda>s. P (typ_at' T p s)"
   (wp: crunch_wps)
 
 lemmas replyUnlink_typ_ats[wp] = typ_at_lifts[OF replyUnlink_typ_at']
