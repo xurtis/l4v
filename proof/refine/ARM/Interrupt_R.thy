@@ -434,7 +434,7 @@ crunches cteDeleteOne
 lemma invoke_arch_irq_handler_invs'[wp]:
   "\<lbrace>invs' and irq_handler_inv_valid' i\<rbrace> ARM_H.invokeIRQHandler i \<lbrace>\<lambda>rv. invs'\<rbrace>"
   apply (cases i; wpsimp wp: dmo_maskInterrupt simp: ARM_H.invokeIRQHandler_def)
-  apply (clarsimp simp: invs'_def valid_state'_def valid_irq_masks'_def
+  apply (clarsimp simp: invs'_def valid_state'_def valid_irq_masks'_def valid_dom_schedule'_def
                         valid_machine_state'_def ct_not_inQ_def
                         ct_in_current_domain_ksMachineState)
   done
@@ -714,7 +714,7 @@ lemma ksDomainTime_invs[simp]:
   "invs' (a\<lparr>ksDomainTime := t\<rparr>) = invs' a"
   by (simp add: invs'_def valid_state'_def cur_tcb'_def ct_not_inQ_def ct_idle_or_in_cur_domain'_def
                 tcb_in_cur_domain'_def valid_machine_state'_def valid_release_queue_def
-                valid_release_queue'_def)
+                valid_release_queue'_def valid_dom_schedule'_def)
 
 lemma valid_machine_state'_ksDomainTime[simp]:
   "valid_machine_state' (a\<lparr>ksDomainTime := t\<rparr>) = valid_machine_state' a"

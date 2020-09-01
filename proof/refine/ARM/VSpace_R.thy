@@ -2519,7 +2519,7 @@ lemma storeHWASID_invs:
    apply fastforce
   apply (simp add: storeHWASID_def)
   apply (wp findPDForASIDAssert_pd_at_wp)
-  apply (clarsimp simp: invs'_def valid_state'_def valid_arch_state'_def
+  apply (clarsimp simp: invs'_def valid_state'_def valid_arch_state'_def valid_dom_schedule'_def
              valid_global_refs'_def global_refs'_def valid_machine_state'_def
              ct_not_inQ_def ct_idle_or_in_cur_domain'_def tcb_in_cur_domain'_def)
   done
@@ -2535,9 +2535,10 @@ lemma storeHWASID_invs_no_cicd':
    apply (fastforce simp: all_invs_but_ct_idle_or_in_cur_domain'_def)
   apply (simp add: storeHWASID_def)
   apply (wp findPDForASIDAssert_pd_at_wp)
-  apply (clarsimp simp: all_invs_but_ct_idle_or_in_cur_domain'_def valid_state'_def valid_arch_state'_def
-             valid_global_refs'_def global_refs'_def valid_machine_state'_def
-             ct_not_inQ_def ct_idle_or_in_cur_domain'_def tcb_in_cur_domain'_def)
+  apply (clarsimp simp: all_invs_but_ct_idle_or_in_cur_domain'_def valid_state'_def
+                        valid_dom_schedule'_def valid_arch_state'_def valid_global_refs'_def
+                        global_refs'_def valid_machine_state'_def ct_not_inQ_def
+                        ct_idle_or_in_cur_domain'_def tcb_in_cur_domain'_def)
   done
 
 lemma findFreeHWASID_invs:
@@ -2549,7 +2550,7 @@ lemma findFreeHWASID_invs:
                    doMachineOp_def split_def
               cong: option.case_cong)
   apply (wp findPDForASIDAssert_pd_at_wp | wpc)+
-  apply (clarsimp simp: invs'_def valid_state'_def valid_arch_state'_def
+  apply (clarsimp simp: invs'_def valid_state'_def valid_arch_state'_def valid_dom_schedule'_def
              valid_global_refs'_def global_refs'_def valid_machine_state'_def
              ct_not_inQ_def
            split del: if_split)
@@ -2574,6 +2575,7 @@ lemma findFreeHWASID_invs_no_cicd':
               cong: option.case_cong)
   apply (wp findPDForASIDAssert_pd_at_wp | wpc)+
   apply (clarsimp simp: all_invs_but_ct_idle_or_in_cur_domain'_def valid_state'_def valid_arch_state'_def
+             valid_dom_schedule'_def
              valid_global_refs'_def global_refs'_def valid_machine_state'_def
              ct_not_inQ_def
            split del: if_split)
@@ -2757,7 +2759,7 @@ lemma storePDE_invs[wp]:
           and (\<lambda>s. valid_pde_mapping' (p && mask pdBits) pde)\<rbrace>
       storePDE p pde
    \<lbrace>\<lambda>_. invs'\<rbrace>"
-  apply (simp add: invs'_def valid_state'_def valid_pspace'_def)
+  apply (simp add: invs'_def valid_state'_def valid_pspace'_def valid_dom_schedule'_def)
   apply (rule hoare_pre)
    apply (wp sch_act_wf_lift valid_global_refs_lift'
              irqs_masked_lift
@@ -2799,7 +2801,7 @@ lemma storePTE_pde_mappings'[wp]:
 
 lemma storePTE_invs [wp]:
   "\<lbrace>invs' and valid_pte' pte\<rbrace> storePTE p pte \<lbrace>\<lambda>_. invs'\<rbrace>"
-  apply (simp add: invs'_def valid_state'_def valid_pspace'_def)
+  apply (simp add: invs'_def valid_state'_def valid_pspace'_def valid_dom_schedule'_def)
   apply (rule hoare_pre)
    apply (wp sch_act_wf_lift valid_global_refs_lift' irqs_masked_lift
              valid_arch_state_lift' valid_irq_node_lift
@@ -2844,7 +2846,7 @@ lemma setObject_asidpool_mappings'[wp]:
 
 lemma setASIDPool_invs [wp]:
   "\<lbrace>invs' and valid_asid_pool' ap\<rbrace> setObject p (ap::asidpool) \<lbrace>\<lambda>_. invs'\<rbrace>"
-  apply (simp add: invs'_def valid_state'_def valid_pspace'_def)
+  apply (simp add: invs'_def valid_state'_def valid_pspace'_def valid_dom_schedule'_def)
   apply (rule hoare_pre)
    apply (wp sch_act_wf_lift valid_global_refs_lift' irqs_masked_lift
              valid_arch_state_lift' valid_irq_node_lift

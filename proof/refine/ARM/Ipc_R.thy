@@ -2600,7 +2600,7 @@ lemma setThreadState_nonqueued_state_update:
                \<and> (\<not> runnable' st \<longrightarrow> sch_act_simple s)
                \<and> (\<not> runnable' st \<longrightarrow> (\<forall>p. t \<notin> set (ksReadyQueues s p)))\<rbrace>
   setThreadState st t \<lbrace>\<lambda>rv. invs'\<rbrace>"
-  apply (simp add: invs'_def valid_state'_def)
+  apply (simp add: invs'_def valid_state'_def valid_dom_schedule'_def)
   apply (rule hoare_pre, wp valid_irq_node_lift
                             sts_valid_queues
                             setThreadState_ct_not_inQ)
@@ -3786,7 +3786,7 @@ lemma sts_invs_minor'':
       and invs'\<rbrace>
      setThreadState st t
    \<lbrace>\<lambda>rv. invs'\<rbrace>"
-  apply (simp add: invs'_def valid_state'_def)
+  apply (simp add: invs'_def valid_state'_def valid_dom_schedule'_def)
   apply (rule hoare_pre)
    apply (wp valid_irq_node_lift sts_sch_act' sts_valid_queues
              setThreadState_ct_not_inQ)

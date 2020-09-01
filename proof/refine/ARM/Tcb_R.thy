@@ -2231,7 +2231,7 @@ lemma setSchedulerAction_invs'[wp]:
    \<lbrace>\<lambda>rv. invs'\<rbrace>"
   apply (simp add: setSchedulerAction_def)
   apply wp
-  apply (clarsimp simp add: invs'_def valid_state'_def valid_irq_node'_def
+  apply (clarsimp simp add: invs'_def valid_state'_def valid_irq_node'_def valid_dom_schedule'_def
                 valid_queues_def valid_queues_no_bitmap_def bitmapQ_defs cur_tcb'_def
                 ct_not_inQ_def valid_release_queue_def valid_release_queue'_def)
   apply (simp add: ct_idle_or_in_cur_domain'_def)

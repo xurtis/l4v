@@ -1434,7 +1434,7 @@ lemma emptySlot_invs'[wp]:
             \<and> (\<forall>sl'. info \<noteq> NullCap \<longrightarrow> sl' \<noteq> sl \<longrightarrow> cteCaps_of s sl' \<noteq> Some info)\<rbrace>
      emptySlot sl info
    \<lbrace>\<lambda>rv. invs'\<rbrace>"
-  apply (simp add: invs'_def valid_state'_def valid_pspace'_def)
+  apply (simp add: invs'_def valid_state'_def valid_pspace'_def valid_dom_schedule'_def)
   apply (rule hoare_pre)
    apply (wp valid_arch_state_lift' valid_irq_node_lift cur_tcb_lift)
   apply (clarsimp simp: cte_wp_at_ctes_of o_def)
@@ -2220,7 +2220,7 @@ lemma tcb_bound_refs'_not_Bound:
 
 lemma unbindNotification_invs[wp]:
   "\<lbrace>invs'\<rbrace> unbindNotification tcb \<lbrace>\<lambda>rv. invs'\<rbrace>"
-  apply (simp add: unbindNotification_def invs'_def valid_state'_def)
+  apply (simp add: unbindNotification_def invs'_def valid_state'_def valid_dom_schedule'_def)
   apply (rule hoare_seq_ext[OF _ gbn_sp'])
   apply (case_tac ntfnPtr, clarsimp, wp, clarsimp)
   apply clarsimp
@@ -2316,7 +2316,7 @@ lemma invs_asid_update_strg':
    invs' (s\<lparr>ksArchState := armKSASIDTable_update
             (\<lambda>_. tab (asid := None)) (ksArchState s)\<rparr>)"
   apply (simp add: invs'_def)
-  apply (simp add: valid_state'_def)
+  apply (simp add: valid_state'_def valid_dom_schedule'_def)
   apply (simp add: valid_global_refs'_def global_refs'_def valid_arch_state'_def valid_asid_table'_def valid_machine_state'_def ct_idle_or_in_cur_domain'_def tcb_in_cur_domain'_def)
   apply (auto simp add: ran_def split: if_split_asm)
   done
@@ -2328,7 +2328,7 @@ lemma invalidateASIDEntry_invs' [wp]:
   apply (wp loadHWASID_wp | simp)+
   apply (clarsimp simp: fun_upd_def[symmetric])
   apply (rule conjI)
-   apply (clarsimp simp: invs'_def valid_state'_def)
+   apply (clarsimp simp: invs'_def valid_state'_def valid_dom_schedule'_def)
    apply (rule conjI)
     apply (simp add: valid_global_refs'_def
                      global_refs'_def)
@@ -2340,7 +2340,7 @@ lemma invalidateASIDEntry_invs' [wp]:
                     valid_asid_map'_def
                     ct_idle_or_in_cur_domain'_def tcb_in_cur_domain'_def)
    subgoal by (auto elim!: subset_inj_on)
-  apply (clarsimp simp: invs'_def valid_state'_def)
+  apply (clarsimp simp: invs'_def valid_state'_def valid_dom_schedule'_def)
   apply (rule conjI)
    apply (simp add: valid_global_refs'_def
                     global_refs'_def)

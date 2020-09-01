@@ -330,12 +330,14 @@ proof -
     by fastforce
   show ?thesis
     apply (cases "ksSchedulerAction s")
-    apply (simp_all add: invs'_def valid_state'_def cur_tcb'_def ct_in_state'_def ct_idle_or_in_cur_domain'_def tcb_in_cur_domain'_def
-                    valid_queues_def valid_queues_no_bitmap_def bitmapQ_defs
-                    vms ct_not_inQ_def
-                    state_refs_of'_def ps_clear_def
-                    valid_irq_node'_def mask
-              cong: option.case_cong)
+    apply (simp_all add: invs'_def valid_state'_def cur_tcb'_def ct_in_state'_def
+                         valid_dom_schedule'_def
+                         ct_idle_or_in_cur_domain'_def tcb_in_cur_domain'_def
+                         valid_queues_def valid_queues_no_bitmap_def bitmapQ_defs
+                         vms ct_not_inQ_def
+                         state_refs_of'_def ps_clear_def
+                         valid_irq_node'_def mask
+                   cong: option.case_cong)
     done
 qed
 
@@ -354,12 +356,12 @@ proof -
     by fastforce
   show ?thesis
     apply (cases "ksSchedulerAction s")
-    apply (simp_all add: all_invs_but_ct_idle_or_in_cur_domain'_def valid_state'_def cur_tcb'_def ct_in_state'_def ct_idle_or_in_cur_domain'_def tcb_in_cur_domain'_def
-                    valid_queues_def valid_queues_no_bitmap_def bitmapQ_defs
-                    vms ct_not_inQ_def
-                    state_refs_of'_def ps_clear_def
-                    valid_irq_node'_def mask
-              cong: option.case_cong)
+    apply (simp_all add: all_invs_but_ct_idle_or_in_cur_domain'_def valid_state'_def cur_tcb'_def
+                         valid_dom_schedule'_def ct_in_state'_def ct_idle_or_in_cur_domain'_def
+                         tcb_in_cur_domain'_def valid_queues_def valid_queues_no_bitmap_def
+                         bitmapQ_defs vms ct_not_inQ_def state_refs_of'_def ps_clear_def
+                         valid_irq_node'_def mask
+                   cong: option.case_cong)
     done
 qed
 
@@ -1466,7 +1468,7 @@ lemma threadSet_ct_idle_or_in_cur_domain':
 
 lemma threadSet_valid_dom_schedule':
   "\<lbrace> valid_dom_schedule'\<rbrace> threadSet F t \<lbrace>\<lambda>_. valid_dom_schedule'\<rbrace>"
-  unfolding threadSet_def
+  unfolding threadSet_def valid_dom_schedule'_def
   by (wp setObject_ksDomSchedule_inv hoare_Ball_helper)
 
 lemma threadSet_invs_trivialT:
@@ -5256,7 +5258,7 @@ lemma sts_invs_minor':
      setThreadState st t
    \<lbrace>\<lambda>rv. invs'\<rbrace>"
   including no_pre
-  apply (simp add: invs'_def valid_state'_def)
+  apply (simp add: invs'_def valid_state'_def valid_dom_schedule'_def)
   apply (rule hoare_pre)
    apply (wp sts_valid_queues valid_irq_node_lift irqs_masked_lift
               setThreadState_ct_not_inQ
